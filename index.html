@@ -1,76 +1,128 @@
 <!DOCTYPE html>
 <html>
-<head>
-<meta charset="utf-8">
-<title>Add a line to a map using a GeoJSON source</title>
-<meta name="viewport" content="initial-scale=1,maximum-scale=1,user-scalable=no">
-<link href="https://api.mapbox.com/mapbox-gl-js/v2.8.2/mapbox-gl.css" rel="stylesheet">
-<script src="https://api.mapbox.com/mapbox-gl-js/v2.8.2/mapbox-gl.js"></script>
-<style>
-body { margin: 0; padding: 0; }
-#map { position: absolute; top: 0; bottom: 0; width: 100%; }
-</style>
-</head>
-<body>
-<div id="map"></div>
-<script>
-	mapboxgl.accessToken = 'pk.eyJ1Ijoic2VyZ2JlciIsImEiOiJja3dwOWgzeGQwYWdyMm9xb2pkMDFvYmNuIn0.H9AJ_NLmDNYMed6dvu_Q0A';
-    const map = new mapboxgl.Map({
-        container: 'map',
-        style: 'mapbox://styles/mapbox/streets-v11',
-        center: [-122.486052, 37.830348],
-        zoom: 15
-    });
 
-    map.on('load', () => {
-        map.addSource('route', {
-            'type': 'geojson',
-            'data': {
-                'type': 'Feature',
-                'properties': {},
-                'geometry': {
-                    'type': 'LineString',
-                    'coordinates': [
-                        [-122.483696, 37.833818],
-                        [-122.483482, 37.833174],
-                        [-122.483396, 37.8327],
-                        [-122.483568, 37.832056],
-                        [-122.48404, 37.831141],
-                        [-122.48404, 37.830497],
-                        [-122.483482, 37.82992],
-                        [-122.483568, 37.829548],
-                        [-122.48507, 37.829446],
-                        [-122.4861, 37.828802],
-                        [-122.486958, 37.82931],
-                        [-122.487001, 37.830802],
-                        [-122.487516, 37.831683],
-                        [-122.488031, 37.832158],
-                        [-122.488889, 37.832971],
-                        [-122.489876, 37.832632],
-                        [-122.490434, 37.832937],
-                        [-122.49125, 37.832429],
-                        [-122.491636, 37.832564],
-                        [-122.492237, 37.833378],
-                        [-122.493782, 37.833683]
-                    ]
+<head>
+    <meta charset="utf-8">
+    <title>Add a line to a map using a GeoJSON source</title>
+    <meta name="viewport" content="initial-scale=1,maximum-scale=1,user-scalable=no">
+    <link href="https://api.mapbox.com/mapbox-gl-js/v2.8.2/mapbox-gl.css" rel="stylesheet">
+    <script src="https://api.mapbox.com/mapbox-gl-js/v2.8.2/mapbox-gl.js"></script>
+    <script src='https://unpkg.com/togeojson@0.16.0/togeojson.js'></script>
+    <script src="https://cdn.jsdelivr.net/npm/@turf/turf@6/turf.min.js"></script>
+
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+        }
+
+        #map {
+            position: absolute;
+            top: 0;
+            bottom: 0;
+            width: 100%;
+        }
+    </style>
+</head>
+
+<body>
+    <div id="map"></div>
+    <script>
+        const gpxFileURL = 'route.gpx';
+        mapboxgl.accessToken = 'pk.eyJ1Ijoic2VyZ2JlciIsImEiOiJja3dwOWgzeGQwYWdyMm9xb2pkMDFvYmNuIn0.H9AJ_NLmDNYMed6dvu_Q0A';
+        const map = new mapboxgl.Map({
+            container: 'map',
+            style: 'mapbox://styles/sergber/cl3vpjrq2000e14ly88yvx8rh', // style URL
+            center: { lng: 135.79245786731053, lat: 44.177859791330434 },
+            zoom: 6.8
+        });
+
+        map.on('load', () => {
+            map.addSource('route', {
+                'type': 'geojson',
+                'data': {
+                    'type': 'Feature',
+                    'properties': {},
+                    'geometry': {
+                        'type': 'LineString',
+                        'coordinates': [
+                        ]
+                    }
                 }
-            }
+            });
+            map.addLayer({
+                'id': 'route',
+                'type': 'line',
+                'source': 'route',
+                'layout': {
+                    'line-join': 'round',
+                    'line-cap': 'round'
+                },
+                'paint': {
+                    'line-color': '#888',
+                    'line-width': 8
+                }
+            });
+
+            fetch(gpxFileURL)
+                .then(function (response) {
+                    return response.text();
+                })
+                .then(function (xml) {
+                    const geoJson = toGeoJSON.gpx(new DOMParser().parseFromString(xml, "text/xml"))
+                    map.getSource("route").setData(geoJson)
+
+                    const coords = turf.coordAll(geoJson);
+                    const start = coords[0]
+                    const end = coords[coords.length - 1]
+
+                    addStartEnd({ label: "A", coords: start })
+                    addStartEnd({ label: "B", coords: end })
+
+                    var bounds = new mapboxgl.LngLatBounds();
+                    bounds.extend(start);
+                    bounds.extend(end);
+                    map.fitBounds(bounds, { padding: 50 });
+
+                });
+
         });
-        map.addLayer({
-            'id': 'route',
-            'type': 'line',
-            'source': 'route',
-            'layout': {
-                'line-join': 'round',
-                'line-cap': 'round'
-            },
-            'paint': {
-                'line-color': '#888',
-                'line-width': 8
-            }
-        });
-    });
-</script>
+
+        function addStartEnd({ label, coords }) {
+
+            // Create a DOM element for each marker.
+            const el = document.createElement('div');
+            const width = 30
+            const height = 30
+
+            const text = document.createElement('span')
+            text.innerText = label
+            text.style.color = "white"
+            text.style.fontSize = "1.5rem";
+            el.appendChild(text)
+
+            el.className = 'marker';
+            el.style.backgroundColor = "rgba(128,128,128,0.8)"
+            el.style.borderRadius = "5px"
+            el.style.border = "1px solid gray"
+            el.style.width = `${width}px`;
+            el.style.height = `${height}px`;
+            el.style.backgroundSize = '100%';
+            el.style.display = "flex"
+            el.style.alignItems = "center"
+            el.style.justifyContent = "center"
+
+            el.addEventListener('click', () => {
+                window.alert("123");
+            });
+
+            // Add markers to the map.
+            new mapboxgl.Marker(el)
+                .setLngLat(coords)
+                .addTo(map);
+        }
+    </script>
 
 </body>
+
 </html>

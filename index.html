@@ -32,10 +32,31 @@
         mapboxgl.accessToken = 'pk.eyJ1Ijoic2VyZ2JlciIsImEiOiJja3dwOWgzeGQwYWdyMm9xb2pkMDFvYmNuIn0.H9AJ_NLmDNYMed6dvu_Q0A';
         const map = new mapboxgl.Map({
             container: 'map',
-            style: 'mapbox://styles/sergber/cl3vpjrq2000e14ly88yvx8rh', // style URL
+            style: 'https://tiles.stadiamaps.com/styles/outdoors.json', // style URL
             center: { lng: 135.79245786731053, lat: 44.177859791330434 },
             zoom: 6.8
         });
+
+
+        // var map = new mapboxgl.Map({
+        //     container: 'map',
+        //     style: {
+        //         version: 8,
+        //         sources: {
+        //             osm: {
+        //                 type: 'raster',
+        //                 tiles: ["https://tile.openstreetmap.org/{z}/{x}/{y}.png"],
+        //                 tileSize: 256,
+        //                 attribution: 'Map tiles by <a target="_top" rel="noopener" href="https://tile.openstreetmap.org/">OpenStreetMap tile servers</a>, under the <a target="_top" rel="noopener" href="https://operations.osmfoundation.org/policies/tiles/">tile usage policy</a>. Data by <a target="_top" rel="noopener" href="http://openstreetmap.org">OpenStreetMap</a>'
+        //             }
+        //         },
+        //         layers: [{
+        //             id: 'osm',
+        //             type: 'raster',
+        //             source: 'osm',
+        //         }],
+        //     }
+        // });
 
         map.on('load', () => {
             map.addSource('route', {
